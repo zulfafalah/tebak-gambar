@@ -1,65 +1,269 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import confetti from "canvas-confetti";
+
+const LEVELS = [
+  {
+    level: 1,
+    image: "/level1.jpeg",
+    hint: "ini orang terdekatmu 🫶",
+  },
+  {
+    level: 2,
+    image: "/level2.jpeg",
+    hint: "Namanya ada huruf 'S' di awal 🔤",
+  },
+  {
+    level: 3,
+    image: "/level3.jpeg",
+    hint: "Nama lengkapnya 7 huruf ✌️",
+  },
+  {
+    level: 4,
+    image: "/level4.jpeg",
+    hint: "Petunjuk terakhir: S-O-L-I-K-I-N 🎯",
+  },
+];
+
+const ANSWER = "solikin";
+
+type GameState = "playing" | "won" | "lost";
+
+function fireConfetti() {
+  const duration = 3000;
+  const end = Date.now() + duration;
+
+  const frame = () => {
+    confetti({
+      particleCount: 6,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: ["#f97316", "#facc15", "#22c55e", "#3b82f6", "#ec4899"],
+    });
+    confetti({
+      particleCount: 6,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: ["#f97316", "#facc15", "#22c55e", "#3b82f6", "#ec4899"],
+    });
+    if (Date.now() < end) requestAnimationFrame(frame);
+  };
+  frame();
+}
 
 export default function Home() {
+  const [currentLevel, setCurrentLevel] = useState(0);
+  const [input, setInput] = useState("");
+  const [gameState, setGameState] = useState<GameState>("playing");
+  const [showHint, setShowHint] = useState(false);
+  const [wrongAnim, setWrongAnim] = useState(false);
+  const [showName, setShowName] = useState(false);
+  const confettiFired = useRef(false);
+
+  const level = LEVELS[currentLevel];
+
+  useEffect(() => {
+    if (gameState === "won" && !confettiFired.current) {
+      confettiFired.current = true;
+      fireConfetti();
+      setTimeout(() => setShowName(true), 400);
+    }
+  }, [gameState]);
+
+  function handleGuess() {
+    if (!input.trim()) return;
+
+    if (input.trim().toLowerCase() === ANSWER) {
+      setGameState("won");
+    } else {
+      setWrongAnim(true);
+      setTimeout(() => setWrongAnim(false), 600);
+
+      if (currentLevel < LEVELS.length - 1) {
+        setShowHint(true);
+        setTimeout(() => {
+          setCurrentLevel((prev) => prev + 1);
+          setShowHint(false);
+          setInput("");
+        }, 2000);
+      } else {
+        setGameState("lost");
+      }
+    }
+  }
+
+  function handleReset() {
+    setCurrentLevel(0);
+    setInput("");
+    setGameState("playing");
+    setShowHint(false);
+    setWrongAnim(false);
+    setShowName(false);
+    confettiFired.current = false;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-50 flex flex-col items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-orange-600">🎮 Tebak Gambar</h1>
+          <p className="text-gray-500 text-sm mt-1">Siapa orang ini?</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Level indicator */}
+        <div className="flex gap-2 justify-center mb-4">
+          {LEVELS.map((l, i) => (
+            <div
+              key={l.level}
+              className={`h-2 flex-1 rounded-full transition-all ${
+                i < currentLevel
+                  ? "bg-gray-300"
+                  : i === currentLevel
+                  ? "bg-orange-500"
+                  : "bg-orange-200"
+              }`}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          ))}
         </div>
-      </main>
+        <p className="text-center text-xs text-gray-400 mb-4">
+          Level {currentLevel + 1} / {LEVELS.length}
+        </p>
+
+        {gameState === "playing" && (
+          <>
+            {/* Image */}
+            <div
+              className={`w-full rounded-2xl overflow-hidden shadow-lg mb-4 transition-transform ${
+                wrongAnim ? "animate-shake border-4 border-red-400" : "border-4 border-orange-200"
+              }`}
+            >
+              <Image
+                src={level.image}
+                alt={`Level ${level.level}`}
+                width={800}
+                height={800}
+                className="w-full h-auto object-contain"
+                priority
+              />
+            </div>
+
+            {/* Hint */}
+            {showHint && (
+              <div className="bg-yellow-100 border border-yellow-300 rounded-xl px-4 py-3 mb-4 text-center text-sm text-yellow-800 font-medium animate-pulse">
+                💡 Petunjuk: {level.hint}
+              </div>
+            )}
+
+            {/* Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleGuess()}
+                placeholder="Ketik jawabanmu..."
+                className="flex-1 border-2 border-orange-300 rounded-xl px-4 py-3 text-base outline-none focus:border-orange-500 bg-white"
+              />
+              <button
+                onClick={handleGuess}
+                className="bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold px-5 py-3 rounded-xl transition-all"
+              >
+                Tebak
+              </button>
+            </div>
+
+            <p className="text-center text-xs text-gray-400 mt-3">
+              Salah? Gambar berganti & dapat petunjuk 😉
+            </p>
+          </>
+        )}
+
+        {/* Won */}
+        {gameState === "won" && (
+          <div className="text-center">
+            <div className="w-full rounded-2xl overflow-hidden shadow-lg mb-5 border-4 border-green-400">
+              <Image
+                src={level.image}
+                alt="Winner"
+                width={800}
+                height={800}
+                className="w-full h-auto object-contain"
+              />
+            </div>
+
+            {/* Yeyy animation */}
+            <div className={`transition-all duration-700 ${showName ? "opacity-100 scale-100" : "opacity-0 scale-50"}`}>
+              <p className="text-6xl mb-2 animate-bounce">🎉</p>
+              <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-yellow-400 to-green-500 mb-1 animate-pulse">
+                YEYYYY!!!
+              </h2>
+              <p className="text-xl font-bold text-gray-700 mt-3">
+                Namanya adalah
+              </p>
+              <p className="text-5xl font-black text-orange-600 tracking-widest mt-1 animate-bounce">
+                SOLIKIN
+              </p>
+              <p className="text-gray-500 text-sm mt-3">
+                ✅ Berhasil di Level {currentLevel + 1}
+              </p>
+            </div>
+
+            <button
+              onClick={handleReset}
+              className="mt-6 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold px-8 py-3 rounded-xl transition-all w-full text-lg"
+            >
+              Main Lagi 🔄
+            </button>
+          </div>
+        )}
+
+        {/* Lost */}
+        {gameState === "lost" && (
+          <div className="text-center">
+            <div className="w-full rounded-2xl overflow-hidden shadow-lg mb-6 border-4 border-red-400">
+              <Image
+                src={LEVELS[3].image}
+                alt="Lost"
+                width={800}
+                height={800}
+                className="w-full h-auto object-contain"
+              />
+            </div>
+            <div className="bg-red-100 border border-red-300 rounded-2xl p-6">
+              <p className="text-5xl mb-3">😅</p>
+              <h2 className="text-2xl font-bold text-red-600 mb-1">Salah Semua!</h2>
+              <p className="text-gray-600 text-sm mt-1">
+                Jawabannya adalah{" "}
+                <span className="font-bold text-red-700 uppercase">SOLIKIN</span>
+              </p>
+            </div>
+            <button
+              onClick={handleReset}
+              className="mt-5 bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-3 rounded-xl transition-all w-full"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+      </div>
+
+      <style jsx global>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(8px); }
+          60% { transform: translateX(-6px); }
+          80% { transform: translateX(6px); }
+        }
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }
