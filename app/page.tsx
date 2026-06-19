@@ -109,7 +109,14 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-50 flex flex-col items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-50 flex flex-col items-center justify-center px-4 py-8 relative">
+      <a
+        href="/admin"
+        className="absolute top-4 right-4 text-gray-300 hover:text-gray-500 text-xs px-2 py-1 rounded transition-colors"
+        aria-label="Admin"
+      >
+        🔒
+      </a>
       <div className="w-full max-w-md">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-orange-600">🎮 Tebak Gambar</h1>
