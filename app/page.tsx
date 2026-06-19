@@ -57,7 +57,7 @@ export default function Home() {
   const confettiFired = useRef(false);
 
   useEffect(() => {
-    fetch(`/game-config.json?_=${Date.now()}`)
+    fetch(`/api/config?_=${Date.now()}`)
       .then((r) => r.json())
       .then((data) => {
         setLevels(data.levels);

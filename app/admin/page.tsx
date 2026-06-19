@@ -3,6 +3,60 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
+function LoginGate({ onAuth }: { onAuth: () => void }) {
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const res = await fetch("/api/admin/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pw }),
+    });
+
+    setLoading(false);
+    if (res.ok) {
+      sessionStorage.setItem("admin_auth", "1");
+      onAuth();
+    } else {
+      setError("Password salah");
+      setPw("");
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-2xl p-8">
+        <h1 className="text-xl font-bold text-orange-400 mb-1">🔒 Admin</h1>
+        <p className="text-gray-500 text-sm mb-6">Masukkan password untuk lanjut</p>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <input
+            type="password"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            placeholder="Password..."
+            autoFocus
+            className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-orange-500"
+          />
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <button
+            type="submit"
+            disabled={loading || !pw}
+            className="bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-all"
+          >
+            {loading ? "Memeriksa..." : "Masuk"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 const LEVEL_KEYS = ["level1", "level2", "level3", "level4"];
 const LEVEL_LABELS: Record<string, string> = {
   level1: "Level 1",
@@ -22,6 +76,18 @@ interface LevelState {
 }
 
 export default function AdminPage() {
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("admin_auth") === "1") setAuthed(true);
+  }, []);
+
+  if (!authed) return <LoginGate onAuth={() => setAuthed(true)} />;
+
+  return <AdminPanel />;
+}
+
+function AdminPanel() {
   const [levelStates, setLevelStates] = useState<Record<string, LevelState>>(
     Object.fromEntries(
       LEVEL_KEYS.map((k) => [
@@ -36,7 +102,7 @@ export default function AdminPage() {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
-    fetch(`/game-config.json?_=${Date.now()}`)
+    fetch(`/api/config?_=${Date.now()}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.answer) setAnswer(data.answer);
@@ -88,11 +154,10 @@ export default function AdminPage() {
 
     if (res.ok) {
       const data = await res.json();
-      const newImage = `/${level}.jpeg?v=${data.version}`;
       setLevelState(level, {
         status: "success",
         uploadMessage: "Gambar tersimpan!",
-        currentImage: newImage,
+        currentImage: data.imageUrl,
         preview: null,
       });
       if (input) input.value = "";
