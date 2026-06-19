@@ -1,0 +1,29 @@
+{
+  "answer": "falah",
+  "levels": [
+    {
+      "level": 1,
+      "key": "level1",
+      "image": "/level1.jpeg",
+      "hint": "ini orang terjelek 🫶"
+    },
+    {
+      "level": 2,
+      "key": "level2",
+      "image": "/level2.jpeg",
+      "hint": "Namanya ada huruf 'S' di awal 🔤"
+    },
+    {
+      "level": 3,
+      "key": "level3",
+      "image": "/level3.jpeg",
+      "hint": "Nama lengkapnya 7 huruf ✌️"
+    },
+    {
+      "level": 4,
+      "key": "level4",
+      "image": "/level4.jpeg",
+      "hint": "Petunjuk terakhir: S-O-L-I-K-I-N 🎯"
+    }
+  ]
+}
