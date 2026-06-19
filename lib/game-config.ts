@@ -2,7 +2,6 @@ import { put, list } from "@vercel/blob";
 import { readFile, writeFile } from "fs/promises";
 import path from "path";
 
-const IS_VERCEL = !!process.env.BLOB_READ_WRITE_TOKEN;
 const LOCAL_PATH = path.join(process.cwd(), "public", "game-config.json");
 
 export interface LevelConfig {
@@ -28,12 +27,17 @@ const DEFAULT_CONFIG: GameConfig = {
 };
 
 export async function readConfig(): Promise<GameConfig> {
-  if (IS_VERCEL) {
-    const { blobs } = await list({ prefix: "game-config" });
-    const blob = blobs.find((b) => b.pathname === "game-config.json");
-    if (!blob) return DEFAULT_CONFIG;
-    const res = await fetch(blob.url + "?t=" + Date.now());
-    return res.json();
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (token) {
+    try {
+      const { blobs } = await list({ prefix: "game-config", token });
+      const blob = blobs.find((b) => b.pathname === "game-config.json");
+      if (!blob) return DEFAULT_CONFIG;
+      const res = await fetch(blob.url + "?t=" + Date.now());
+      return res.json();
+    } catch {
+      return DEFAULT_CONFIG;
+    }
   }
   try {
     return JSON.parse(await readFile(LOCAL_PATH, "utf-8"));
@@ -43,12 +47,14 @@ export async function readConfig(): Promise<GameConfig> {
 }
 
 export async function saveConfig(config: GameConfig): Promise<void> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
   const body = JSON.stringify(config, null, 2);
-  if (IS_VERCEL) {
+  if (token) {
     await put("game-config.json", body, {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
+      token,
     });
   } else {
     await writeFile(LOCAL_PATH, body);
