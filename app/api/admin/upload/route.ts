@@ -5,6 +5,7 @@ import path from "path";
 import { readConfig, saveConfig } from "@/lib/game-config";
 
 const ALLOWED_LEVELS = ["level1", "level2", "level3", "level4"];
+const USE_BLOB = !!(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 
 export const maxDuration = 30;
 
@@ -27,14 +28,11 @@ export async function POST(request: NextRequest) {
     const filename = `${level}.jpeg`;
     let imageUrl: string;
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-
-    if (token) {
+    if (USE_BLOB) {
       const blob = await put(filename, buffer, {
         access: "public",
         addRandomSuffix: false,
         contentType: "image/jpeg",
-        token,
       });
       imageUrl = blob.url;
     } else {

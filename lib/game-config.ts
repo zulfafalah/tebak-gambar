@@ -3,6 +3,7 @@ import { readFile, writeFile } from "fs/promises";
 import path from "path";
 
 const LOCAL_PATH = path.join(process.cwd(), "public", "game-config.json");
+const USE_BLOB = !!(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN);
 
 export interface LevelConfig {
   level: number;
@@ -27,10 +28,9 @@ const DEFAULT_CONFIG: GameConfig = {
 };
 
 export async function readConfig(): Promise<GameConfig> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (token) {
+  if (USE_BLOB) {
     try {
-      const { blobs } = await list({ prefix: "game-config", token });
+      const { blobs } = await list({ prefix: "game-config" });
       const blob = blobs.find((b) => b.pathname === "game-config.json");
       if (!blob) return DEFAULT_CONFIG;
       const res = await fetch(blob.url + "?t=" + Date.now());
@@ -47,14 +47,12 @@ export async function readConfig(): Promise<GameConfig> {
 }
 
 export async function saveConfig(config: GameConfig): Promise<void> {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
   const body = JSON.stringify(config, null, 2);
-  if (token) {
+  if (USE_BLOB) {
     await put("game-config.json", body, {
       access: "public",
       addRandomSuffix: false,
       contentType: "application/json",
-      token,
     });
   } else {
     await writeFile(LOCAL_PATH, body);
