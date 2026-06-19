@@ -13,8 +13,7 @@
     "canvas-confetti": "^1.9.4",
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "tiktok-scraper": "github:drawrowfly/tiktok-scraper"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
