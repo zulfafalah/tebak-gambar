@@ -1,8 +1,5 @@
 import { NextRequest } from "next/server";
-import { writeFile, readFile } from "fs/promises";
-import path from "path";
-
-const CONFIG_PATH = path.join(process.cwd(), "public", "game-config.json");
+import { readConfig, saveConfig } from "@/lib/game-config";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -11,7 +8,7 @@ export async function POST(request: NextRequest) {
     hints?: Record<string, string>;
   };
 
-  const config = JSON.parse(await readFile(CONFIG_PATH, "utf-8"));
+  const config = await readConfig();
 
   if (typeof answer === "string" && answer.trim()) {
     config.answer = answer.trim().toLowerCase();
@@ -25,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2));
+  await saveConfig(config);
 
   return Response.json({ success: true });
 }
